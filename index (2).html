@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mini Cassino Secreto</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Luckiest+Guy&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --accent: #feca2f;
+      --accent-glow: #ffe14d;
+      --bg-dark: #0a0a0a;
+      --neon-green: #00ff95;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: radial-gradient(circle, #111 0%, #000 100%);
+      color: #fff;
+      font-family: 'Orbitron', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+      overflow-x: hidden;
+      position: relative;
+      text-align: center;
+    }
+
+    .lights {
+      position: absolute;
+      width: 200%;
+      height: 200%;
+      top: -50%;
+      left: -50%;
+      background-image: radial-gradient(#ffe14d22 1px, transparent 1px);
+      background-size: 40px 40px;
+      animation: spinBg 60s linear infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    @keyframes spinBg {
+      100% { transform: rotate(360deg); }
+    }
+
+    h1 {
+      font-family: 'Luckiest Guy', cursive;
+      font-size: clamp(2rem, 6vw, 3rem);
+      color: var(--accent);
+      text-shadow: 0 0 15px var(--accent), 0 0 25px var(--accent-glow);
+      margin-bottom: 1rem;
+      z-index: 1;
+    }
+
+    p {
+      color: #ccc;
+      margin-bottom: 2rem;
+      font-size: 1rem;
+      max-width: 90%;
+    }
+
+    .slot-machine {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 1rem;
+      justify-content: center;
+      margin-bottom: 2rem;
+      z-index: 1;
+    }
+
+    .reel {
+      width: 70px;
+      height: 70px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      overflow: hidden;
+      box-shadow: 0 0 10px var(--accent);
+      position: relative;
+      backdrop-filter: blur(8px);
+    }
+
+    .symbols {
+      position: absolute;
+      top: 0;
+      width: 100%;
+    }
+
+    .symbol {
+      height: 70px;
+      font-size: 42px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .btn {
+      padding: 12px 28px;
+      font-size: 1.1rem;
+      border: none;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--neon-green), #00d78f);
+      color: #000;
+      cursor: pointer;
+      box-shadow: 0 0 15px #00ff9580;
+      transition: transform 0.2s;
+      font-family: 'Luckiest Guy', cursive;
+      z-index: 1;
+    }
+
+    .btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 25px #00ff95;
+    }
+
+    .result {
+      margin-top: 2rem;
+      font-size: 1.2rem;
+      min-height: 3rem;
+      z-index: 1;
+    }
+
+    .access-btn {
+      margin-top: 1rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent-glow));
+      color: #000;
+      box-shadow: 0 0 15px var(--accent);
+    }
+
+    .access-btn:hover {
+      box-shadow: 0 0 25px var(--accent);
+    }
+
+    @media (max-width: 480px) {
+      .slot-machine {
+        gap: 0.5rem;
+      }
+
+      .reel {
+        width: 60px;
+        height: 60px;
+      }
+
+      .symbol {
+        height: 60px;
+        font-size: 36px;
+      }
+
+      .btn {
+        padding: 10px 20px;
+        font-size: 1rem;
+      }
+
+      .result {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="lights"></div>
+  <h1>🎰 Mini Cassino Secreto</h1>
+  <p>Gire agora e ganhe 40 rodadas grátis!</p>
+
+  <div class="slot-machine">
+    <div class="reel"><div class="symbols" id="reel1"></div></div>
+    <div class="reel"><div class="symbols" id="reel2"></div></div>
+    <div class="reel"><div class="symbols" id="reel3"></div></div>
+  </div>
+
+  <button class="btn" id="spinButton">Girar</button>
+  <div class="result" id="result"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
+  <script>
+    const WIN_EMOJI = "💎";
+    const SYMBOLS = ["🍒", "🍋", "🍇", "🔔", "🍉", "⭐"];
+    const reels = [
+      document.getElementById("reel1"),
+      document.getElementById("reel2"),
+      document.getElementById("reel3"),
+    ];
+    const spinBtn = document.getElementById("spinButton");
+    const resultBox = document.getElementById("result");
+
+    function getRandomSymbol() {
+      return SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)];
+    }
+
+    function spin() {
+      spinBtn.disabled = true;
+      resultBox.textContent = "🎲 Girando...";
+
+      reels.forEach((reel, index) => {
+        reel.innerHTML = "";
+        for (let i = 0; i < 12; i++) {
+          const div = document.createElement("div");
+          div.className = "symbol";
+          div.textContent = getRandomSymbol();
+          reel.appendChild(div);
+        }
+
+        for (let i = 0; i < 3; i++) {
+          const div = document.createElement("div");
+          div.className = "symbol";
+          div.textContent = WIN_EMOJI;
+          reel.appendChild(div);
+        }
+
+        reel.style.transition = "none";
+        reel.style.top = "0px";
+        void reel.offsetWidth;
+
+        const totalHeight = reel.scrollHeight - 210;
+        const duration = 1.8 + index * 0.3;
+        reel.style.transition = `top ${duration}s ease-in-out`;
+        reel.style.top = `-${totalHeight}px`;
+      });
+
+      setTimeout(showWin, 2800);
+    }
+
+    function showWin() {
+      reels.forEach((reel) => {
+        reel.innerHTML = "";
+        for (let i = 0; i < 3; i++) {
+          const div = document.createElement("div");
+          div.className = "symbol";
+          div.textContent = WIN_EMOJI;
+          reel.appendChild(div);
+        }
+        reel.style.top = "0px";
+      });
+
+      resultBox.innerHTML = "🎉 Você GANHOU 40 rodadas grátis!";
+      if (typeof confetti === "function") {
+        confetti({ particleCount: 180, spread: 100, origin: { y: 0.7 } });
+      }
+
+      const btn = document.createElement("button");
+      btn.textContent = "Acessar agora";
+      btn.className = "btn access-btn";
+      btn.onclick = () => window.location.href = "https://jonbet.cxclick.com/visit/?bta=39145&brand=jonbet";
+      resultBox.appendChild(btn);
+
+      spinBtn.disabled = false;
+    }
+
+    spinBtn.addEventListener("click", spin);
+  </script>
+</body>
+</html>
